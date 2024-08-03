@@ -1,0 +1,3 @@
+#define IDR_MENU1 101
+#define ID_FILE_OPEN 9001
+#define ID_FILE_SAVE 9002

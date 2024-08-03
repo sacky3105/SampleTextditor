@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleTextEditor", "SimpleTextEditor\SimpleTextEditor.vcxproj", "{EFCDCA5A-CA8C-443B-9176-A78389C27C29}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ソリューション項目", "ソリューション項目", "{5700B804-E010-4D49-8B70-B16C00976BA9}"
+	ProjectSection(SolutionItems) = preProject
+		resource.h = resource.h
+		resource.rc = resource.rc
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EFCDCA5A-CA8C-443B-9176-A78389C27C29}.Debug|x64.ActiveCfg = Debug|x64
+		{EFCDCA5A-CA8C-443B-9176-A78389C27C29}.Debug|x64.Build.0 = Debug|x64
+		{EFCDCA5A-CA8C-443B-9176-A78389C27C29}.Debug|x86.ActiveCfg = Debug|Win32
+		{EFCDCA5A-CA8C-443B-9176-A78389C27C29}.Debug|x86.Build.0 = Debug|Win32
+		{EFCDCA5A-CA8C-443B-9176-A78389C27C29}.Release|x64.ActiveCfg = Release|x64
+		{EFCDCA5A-CA8C-443B-9176-A78389C27C29}.Release|x64.Build.0 = Release|x64
+		{EFCDCA5A-CA8C-443B-9176-A78389C27C29}.Release|x86.ActiveCfg = Release|Win32
+		{EFCDCA5A-CA8C-443B-9176-A78389C27C29}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {32CDE995-D3B5-4690-8D0B-6FC2CDD9009B}
+	EndGlobalSection
+EndGlobal

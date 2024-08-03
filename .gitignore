@@ -1,0 +1,85 @@
+# Visual Studioの一時ファイルと設定ファイルを除外する
+
+# User-specific files
+.vscode/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files (Mono)
+*.userprefs
+
+# Mono auto generated files
+mono_crash.*
+
+# VS Code directories
+.vscode/
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# ビルド出力と一時ファイル
+[Bb]in/
+[Oo]bj/
+
+# ビルドログファイル
+*.log
+*.tlog
+
+# パッケージマネージャのディレクトリ
+node_modules/
+packages/
+
+# リポジトリ固有の設定ファイル
+*.repo
+
+# 拡張機能のディレクトリ
+.idea/
+.vscode/
+.DS_Store
+
+# その他の設定ファイルや一時ファイル
+*.pidb
+*.log
+*.ilk
+*.pdb
+*.obj
+*.cache
+*.ilk
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+*.ipch
+*.tlog
+*.log
+*.lastbuildstate
+*.scc
+*.mssccprj.scc
+*.vssscc
+*.loadstate
+*.latestbuildstate
+
+# Visual Studio Codeの設定ファイル
+.vscode/
+
+# Visual Studio 2017/2019の設定ファイル
+.vs/
