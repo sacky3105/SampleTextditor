@@ -7,8 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleTextEditor", "SimpleT
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ソリューション項目", "ソリューション項目", "{5700B804-E010-4D49-8B70-B16C00976BA9}"
 	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
 		resource.h = resource.h
-		resource.rc = resource.rc
 	EndProjectSection
 EndProject
 Global

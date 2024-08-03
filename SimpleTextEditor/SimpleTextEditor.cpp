@@ -1,24 +1,25 @@
 #include <windows.h>
 #include <commdlg.h>
-#include <stdio.h>  // ファイル操作に必要なヘッダファイルのインクルード
-#include "resource.h"  // リソースヘッダファイルのインクルード
+#include <stdio.h>
+#include <richedit.h>  // Rich Editコントロールのヘッダーファイル
+#include "resource.h"
 
-// グローバル変数
 wchar_t szClassName[] = L"SimpleTextEditor";
 HWND hEdit;
+HWND hButton;
 
-// プロトタイプ宣言
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void LoadFile(HWND, const wchar_t*);
 void SaveFile(HWND, const wchar_t*);
+void FindText(HWND);
+void ReplaceText(HWND hEdit, const wchar_t* findText, const wchar_t* replaceText, BOOL replaceAll);
+INT_PTR CALLBACK ReplaceDlgProc(HWND, UINT, WPARAM, LPARAM);
 
-// WinMain関数
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow) {
     WNDCLASSEX wc;
     HWND hwnd;
     MSG Msg;
 
-    // ウィンドウクラスの設定
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.style = 0;
     wc.lpfnWndProc = WndProc;
@@ -28,17 +29,15 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wc.lpszMenuName = MAKEINTRESOURCE(IDR_MENU1);  // メニューの指定
+    wc.lpszMenuName = MAKEINTRESOURCE(IDR_MENU1);
     wc.lpszClassName = szClassName;
     wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
-    // ウィンドウクラスの登録
     if (!RegisterClassEx(&wc)) {
         MessageBox(NULL, L"Window Registration Failed!", L"Error!", MB_ICONEXCLAMATION | MB_OK);
         return 0;
     }
 
-    // ウィンドウの作成
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE,
         szClassName,
@@ -52,11 +51,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
         return 0;
     }
 
-    // ウィンドウの表示と更新
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
 
-    // メッセージループ
     while (GetMessage(&Msg, NULL, 0, 0) > 0) {
         TranslateMessage(&Msg);
         DispatchMessage(&Msg);
@@ -64,25 +61,41 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
     return Msg.wParam;
 }
 
-// ウィンドウプロシージャ
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_CREATE: {
-        // エディットコントロールの作成
+        LoadLibrary(TEXT("Msftedit.dll"));
         hEdit = CreateWindowEx(
-            0, L"EDIT", L"",
+            0, MSFTEDIT_CLASS, L"",
             WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL,
-            0, 0, 800, 600,
+            0, 50, 800, 500,
             hwnd, (HMENU)1, GetModuleHandle(NULL), NULL);
+        if (!hEdit) {
+            MessageBox(hwnd, L"Could not create edit box.", L"Error", MB_OK | MB_ICONERROR);
+        }
+        hButton = CreateWindow(
+            L"BUTTON",  // Predefined class; Unicode assumed
+            L"Click Me", // Button text
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, // Styles
+            10,         // x position
+            10,         // y position
+            100,        // Button width
+            30,         // Button height
+            hwnd,       // Parent window
+            (HMENU)IDC_BUTTON1, // No menu.
+            (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
+            NULL);      // Pointer not needed.
+
+        if (!hButton) {
+            MessageBox(hwnd, L"Could not create button.", L"Error", MB_OK | MB_ICONERROR);
+        }
     }
                   break;
     case WM_SIZE: {
-        // ウィンドウサイズ変更時にエディットコントロールのサイズを調整
-        MoveWindow(hEdit, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
+        MoveWindow(hEdit, 0, 50, LOWORD(lParam), HIWORD(lParam) - 50, TRUE);
     }
                 break;
     case WM_COMMAND: {
-        // メニューコマンドの処理
         switch (LOWORD(wParam)) {
         case ID_FILE_OPEN: {
             OPENFILENAME ofn;
@@ -120,6 +133,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
         }
                          break;
+        case ID_EDIT_FIND: {
+            FindText(hwnd);
+        }
+                         break;
+        case ID_EDIT_REPLACE: {
+            DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_REPLACE_DIALOG), hwnd, ReplaceDlgProc, (LPARAM)hEdit);
+        }
+                            break;
+        case IDC_BUTTON1: {
+            MessageBox(hwnd, L"Button clicked!", L"Info", MB_OK | MB_ICONINFORMATION);
+        }
+                        break;
         }
     }
                    break;
@@ -135,7 +160,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-// ファイル読み込み処理
 void LoadFile(HWND hwnd, const wchar_t* path) {
     FILE* file;
     _wfopen_s(&file, path, L"rb");
@@ -148,7 +172,6 @@ void LoadFile(HWND hwnd, const wchar_t* path) {
         fread(buffer, sizeof(char), fileSize, file);
         buffer[fileSize] = '\0';
 
-        // マルチバイト文字列をワイド文字列に変換
         int wchars_num = MultiByteToWideChar(CP_UTF8, 0, buffer, -1, NULL, 0);
         wchar_t* wstr = new wchar_t[wchars_num];
         MultiByteToWideChar(CP_UTF8, 0, buffer, -1, wstr, wchars_num);
@@ -161,7 +184,6 @@ void LoadFile(HWND hwnd, const wchar_t* path) {
     }
 }
 
-// ファイル保存処理
 void SaveFile(HWND hwnd, const wchar_t* path) {
     FILE* file;
     _wfopen_s(&file, path, L"wb");
@@ -170,7 +192,6 @@ void SaveFile(HWND hwnd, const wchar_t* path) {
         wchar_t* wbuffer = new wchar_t[length + 1];
         GetWindowText(hEdit, wbuffer, length + 1);
 
-        // ワイド文字列をマルチバイト文字列に変換
         int chars_num = WideCharToMultiByte(CP_UTF8, 0, wbuffer, -1, NULL, 0, NULL, NULL);
         char* buffer = new char[chars_num];
         WideCharToMultiByte(CP_UTF8, 0, wbuffer, -1, buffer, chars_num, NULL, NULL);
@@ -183,3 +204,86 @@ void SaveFile(HWND hwnd, const wchar_t* path) {
     }
 }
 
+void FindText(HWND hwnd) {
+    FINDREPLACE fr;
+    ZeroMemory(&fr, sizeof(fr));
+    fr.lStructSize = sizeof(fr);
+    fr.hwndOwner = hwnd;
+    fr.Flags = FR_DOWN;
+    fr.lpstrFindWhat = new wchar_t[80];
+    fr.wFindWhatLen = 80;
+
+    HWND hFind = FindText(&fr);
+
+    if (hFind) {
+        int start = 0, end = 0;
+        SendMessage(hEdit, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+
+        FINDTEXT ft;
+        ft.chrg.cpMin = end;
+        ft.chrg.cpMax = -1;
+        ft.lpstrText = fr.lpstrFindWhat;
+
+        int pos = SendMessage(hEdit, EM_FINDTEXT, fr.Flags, (LPARAM)&ft);
+        if (pos != -1) {
+            SendMessage(hEdit, EM_SETSEL, pos, pos + wcslen(fr.lpstrFindWhat));
+            SendMessage(hEdit, EM_SCROLLCARET, 0, 0);
+        }
+    }
+
+    delete[] fr.lpstrFindWhat;
+}
+
+INT_PTR CALLBACK ReplaceDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+    static HWND hEdit;
+    static wchar_t findText[100];
+    static wchar_t replaceText[100];
+
+    switch (message) {
+    case WM_INITDIALOG:
+        hEdit = (HWND)lParam;
+        return (INT_PTR)TRUE;
+
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDC_REPLACE || LOWORD(wParam) == IDC_REPLACEALL) {
+            GetDlgItemText(hDlg, IDC_FINDTEXT, findText, 100);
+            GetDlgItemText(hDlg, IDC_REPLACETEXT, replaceText, 100);
+
+            if (LOWORD(wParam) == IDC_REPLACE) {
+                ReplaceText(hEdit, findText, replaceText, FALSE);
+            }
+            else if (LOWORD(wParam) == IDC_REPLACEALL) {
+                ReplaceText(hEdit, findText, replaceText, TRUE);
+            }
+            return (INT_PTR)TRUE;
+        }
+        break;
+    case WM_CLOSE:
+        EndDialog(hDlg, 0);
+        return (INT_PTR)TRUE;
+    }
+    return (INT_PTR)FALSE;
+}
+
+void ReplaceText(HWND hEdit, const wchar_t* findText, const wchar_t* replaceText, BOOL replaceAll) {
+    int findTextLen = wcslen(findText);
+    int replaceTextLen = wcslen(replaceText);
+    CHARRANGE chrg;
+    FINDTEXT ft;
+
+    ft.chrg.cpMin = 0;
+    ft.chrg.cpMax = -1;
+    ft.lpstrText = (LPWSTR)findText;
+
+    while (SendMessage(hEdit, EM_FINDTEXT, FR_DOWN, (LPARAM)&ft) != -1) {
+        chrg.cpMin = ft.chrg.cpMin;
+        chrg.cpMax = ft.chrg.cpMax;
+        SendMessage(hEdit, EM_EXSETSEL, 0, (LPARAM)&chrg);
+        SendMessage(hEdit, EM_REPLACESEL, TRUE, (LPARAM)replaceText);
+
+        if (!replaceAll) {
+            break;
+        }
+        ft.chrg.cpMin = chrg.cpMin + replaceTextLen;
+    }
+}
